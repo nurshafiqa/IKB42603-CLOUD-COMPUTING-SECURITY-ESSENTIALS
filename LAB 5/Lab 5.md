@@ -5,7 +5,7 @@
 **Topic:** Monitoring, Logging & Incident Detection  
 **Tools:** Docker, LocalStack, AWS CLI  
 **Environment:** Windows 11 / PowerShell  
-**Student Name:** Nur Shafiqa Binti Ab Rahim  
+**Student Name:** Nur Shafiqa binti Ab Rahim  
 **Student ID:** 52215124832  
 **Date:** 09/09/2026
 
@@ -65,7 +65,7 @@ docker run -d --name localstack -p 4566:4566 -e LOCALSTACK_AUTH_TOKEN="$env:LOCA
 
 The LocalStack health endpoint confirmed that the `logs` service was available.
 
-![LocalStack health and available services](evidence lab5/setup1.1.png)
+![LocalStack health and available services](evidence-lab5/setup1.1.png)
 
 **Figure 1. LocalStack health check.**
 
@@ -85,7 +85,7 @@ Result:
 }
 ```
 
-![AWS CLI connected to LocalStack](evidence lab5/setup1.2.png)
+![AWS CLI connected to LocalStack](evidence-lab5/setup1.2.png)
 
 **Figure 2. AWS CLI successfully communicating with LocalStack.**
 
@@ -115,7 +115,7 @@ The log was checked using:
 Get-Content auth.log
 ```
 
-![Authentication log](evidence lab5/task1.png)
+![Authentication log](evidence-lab5/task1.png)
 
 **Figure 3. Sample authentication and suspicious activity log.**
 
@@ -182,7 +182,7 @@ aws $EP logs get-log-events --log-group-name /ccse/app --log-stream-name auth --
 
 The original seven messages were successfully read back from the centralised log stream.
 
-![Centralised log read-back](evidence lab5/task2.png)
+![Centralised log read-back](evidence-lab5/task2.png)
 
 **Figure 4. Log events successfully stored and retrieved from LocalStack.**
 
@@ -210,7 +210,7 @@ Count Name
     4 203.0.113.9
 ```
 
-![Failed login count grouped by IP](evidence lab5/task3.png)
+![Failed login count grouped by IP](evidence-lab5/task3.png)
 
 **Figure 5. Failed-login activity grouped by source IP.**
 
@@ -286,7 +286,7 @@ Get-Content auth.chain
 
 Each log entry contained a corresponding 64-character SHA-256 hash.
 
-![Original hash chain](evidence lab5/task4.1.png)
+![Original hash chain](evidence-lab5/task4.1.png)
 
 **Figure 6. Original authentication log with SHA-256 hash chain.**
 
@@ -341,7 +341,7 @@ $TAMPERED = $PREV
 
 The original final hash and tampered final hash were then compared.
 
-![Tampering detection](evidence lab5/task4.2.png)
+![Tampering detection](evidence-lab5/task4.2.png)
 
 **Figure 7. Different final hashes demonstrate that the log was altered.**
 
@@ -398,7 +398,7 @@ IP=203.0.113.9 fails=4 success=1 export=1
 ALERT: probable brute-force -> compromise -> data exfiltration
 ```
 
-![Incident correlation alert](evidence lab5/task5.png)
+![Incident correlation alert](evidence-lab5/task5.png)
 
 **Figure 8. Correlation of authentication and data-export events.**
 
@@ -458,7 +458,7 @@ The resulting rule was:
 DROP    all    --    203.0.113.9    0.0.0.0/0
 ```
 
-![Containment rule](evidence lab5/task6.1.png)
+![Containment rule](evidence-lab5/task6.1.png)
 
 **Figure 9. Containment rule blocking the suspicious IP address.**
 
@@ -487,7 +487,7 @@ The evidence hash file contained:
 b8a941184e0c89ba6684f7136c6d404fb537348188e46a99a05976973140b9cf  evidence_20260909.log
 ```
 
-![Evidence collection and SHA-256 hash](evidence lab5/task6.2.png)
+![Evidence collection and SHA-256 hash](evidence-lab5/task6.2.png)
 
 **Figure 10. Preserved evidence and SHA-256 integrity hash.**
 
@@ -513,7 +513,7 @@ Actual   : b8a941184e0c89ba6684f7136c6d404fb537348188e46a99a05976973140b9cf
 Integrity: True
 ```
 
-![Evidence integrity verification](evidence lab5/verify.png)
+![Evidence integrity verification](evidence-lab5/verify.png)
 
 **Figure 11. Evidence hash verification confirms that the preserved log remains unchanged.**
 
@@ -773,10 +773,10 @@ Overall, the laboratory demonstrated how centralised logging, event correlation,
 
 # 15. Evidence File List
 
-Place the screenshots in an `evidence lab5` folder beside this Markdown file using the following filenames:
+Place the screenshots in an `evidence-lab5` folder beside this Markdown file using the following filenames:
 
 ```text
-evidence lab5/
+evidence-lab5/
 ├── setup1.1.png
 ├── setup1.2.png
 ├── task1.png
