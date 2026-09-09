@@ -716,15 +716,15 @@ Therefore, good logging provides both operational security visibility and eviden
 
 | Requirement | Status | Evidence |
 |---|---|---|
-| Logs centralised | ✅ Completed | Task 2 |
-| Failed logins queryable | ✅ Completed | Task 3 |
-| Logs made tamper-evident | ✅ Completed | Task 4 |
-| Tampering detected | ✅ Completed | Task 4 |
-| Incident detected through correlation | ✅ Completed | Task 5 |
-| Attacker IP contained | ✅ Completed | Task 6 |
-| Evidence collected | ✅ Completed | Task 6 |
-| Evidence integrity verified | ✅ Completed | Verification |
-| Incident report documented | ✅ Completed | Incident Report |
+| Logs centralised |  Completed | Task 2 |
+| Failed logins queryable |  Completed | Task 3 |
+| Logs made tamper-evident |  Completed | Task 4 |
+| Tampering detected |  Completed | Task 4 |
+| Incident detected through correlation |  Completed | Task 5 |
+| Attacker IP contained |  Completed | Task 6 |
+| Evidence collected |  Completed | Task 6 |
+| Evidence integrity verified |  Completed | Verification |
+| Incident report documented |  Completed | Incident Report |
 
 ---
 
