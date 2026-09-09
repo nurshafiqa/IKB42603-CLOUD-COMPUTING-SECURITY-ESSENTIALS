@@ -70,6 +70,68 @@ The main objectives are:
 
 ---
 
+# Setup & Environment Verification
+
+Before starting Tasks 1–6, LocalStack and AWS CLI were verified.
+
+## Setup 1.1 — LocalStack Health Check
+
+LocalStack was started with the authenticated container configuration:
+
+```powershell
+docker run -d --name localstack -p 4566:4566 -e LOCALSTACK_AUTH_TOKEN="$env:LOCALSTACK_AUTH_TOKEN" localstack/localstack
+```
+
+The LocalStack health endpoint was checked with:
+
+```powershell
+curl.exe http://localhost:4566/_localstack/health
+```
+
+The health response showed that the LocalStack services were available, including the `logs` service required for this laboratory.
+
+![LocalStack health check](evidence-lab5/setup1.1.png)
+
+**Figure Setup 1.1. LocalStack health check showing available services.**
+
+## Setup 1.2 — AWS CLI Connectivity to LocalStack
+
+AWS CLI was configured with dummy LocalStack credentials:
+
+```powershell
+aws configure set aws_access_key_id test
+aws configure set aws_secret_access_key test
+aws configure set default.region us-east-1
+aws configure set default.output json
+```
+
+The LocalStack endpoint was defined as:
+
+```powershell
+$EP="--endpoint-url=http://localhost:4566"
+```
+
+Connectivity was verified using:
+
+```powershell
+aws $EP sts get-caller-identity
+```
+
+The command returned:
+
+```text
+{
+    "UserId": "000000000000",
+    "Account": "000000000000",
+    "Arn": "arn:aws:iam::000000000000:root"
+}
+```
+
+![AWS CLI LocalStack connectivity](evidence-lab5/setup1.2.png)
+
+**Figure Setup 1.2. AWS CLI successfully communicating with LocalStack.**
+
+
 ## Evidence Folder
 
 All screenshots for this report are stored in the following GitHub folder:
@@ -80,7 +142,7 @@ evidence-lab5/
 
 | Evidence File | Purpose |
 |---|---|
-| `setup1.1.png` | LocalStack health/status showing services available |
+| `setup1.1.png` | LocalStack health check showing services available |
 | `setup1.2.png` | AWS CLI connectivity to LocalStack using STS |
 | `task1.png` | Generated `auth.log` with seven authentication/activity entries |
 | `task2.png` | Logs uploaded to and read back from LocalStack |
@@ -654,15 +716,15 @@ Therefore, good logging provides both operational security visibility and eviden
 
 | Requirement | Status | Evidence |
 |---|---|---|
-| Logs centralised |  Completed | Task 2 |
-| Failed logins queryable |  Completed | Task 3 |
-| Logs made tamper-evident |  Completed | Task 4 |
-| Tampering detected |  Completed | Task 4 |
-| Incident detected through correlation |  Completed | Task 5 |
-| Attacker IP contained |  Completed | Task 6 |
-| Evidence collected |  Completed | Task 6 |
-| Evidence integrity verified |  Completed | Verification |
-| Incident report documented |  Completed | Incident Report |
+| Logs centralised | ✅ Completed | Task 2 |
+| Failed logins queryable | ✅ Completed | Task 3 |
+| Logs made tamper-evident | ✅ Completed | Task 4 |
+| Tampering detected | ✅ Completed | Task 4 |
+| Incident detected through correlation | ✅ Completed | Task 5 |
+| Attacker IP contained | ✅ Completed | Task 6 |
+| Evidence collected | ✅ Completed | Task 6 |
+| Evidence integrity verified | ✅ Completed | Verification |
+| Incident report documented | ✅ Completed | Incident Report |
 
 ---
 
