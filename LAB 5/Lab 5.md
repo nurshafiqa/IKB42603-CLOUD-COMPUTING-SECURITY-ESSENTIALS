@@ -1,103 +1,106 @@
-# IKB42603 Cloud Computing Security Essentials
-# Lab 5 – Monitoring, Logging & Incident Detection
+# Lab 5: Monitoring, Logging & Incident Detection
 
-**Weeks:** 9–10  
+**Course:** IKB42603 Cloud Computing Security Essentials  
 **Topic:** Monitoring, Logging & Incident Detection  
-**Tools:** Docker, LocalStack, AWS CLI  
+**Weeks:** 9–10  
+**Tools:** Docker, LocalStack, AWS CLI, PowerShell  
 **Environment:** Windows 11 / PowerShell  
-**Student Name:** Nur Shafiqa binti Ab Rahim  
+**Name:** Nur Shafiqa binti Ab Rahim  
 **Student ID:** 52215124832  
 **Date:** 09/09/2026
 
 ---
 
-## 1. Objective
+## Lab Summary / Objective
 
-This laboratory focuses on monitoring, logging, and incident detection in a cloud-style environment using Docker and LocalStack.
+This lab demonstrates monitoring, logging, security-event querying, tamper-evident logs, incident detection and incident response using Docker and LocalStack.
 
-The objectives of this lab are to:
+The main objectives are:
 
-1. Collect and centralise logs from multiple services.
-2. Distinguish between logs and events and query security activity.
-3. Build a tamper-evident, hash-chained log and detect alteration.
-4. Detect an incident by correlating multiple events.
-5. Perform a basic incident-response process consisting of detection, containment, evidence collection, integrity verification, and documentation.
+- Collect and centralise application logs.
+- Distinguish between logs and events and query security activity.
+- Build a SHA-256 hash-chained log and detect alteration.
+- Detect an incident by correlating multiple related events.
+- Perform incident response through detection, containment, evidence collection, integrity verification and documentation.
 
 ---
 
-## 2. Environment and Prerequisites
-
-The laboratory was performed using:
-
-- Windows 11
-- Docker Desktop
-- Docker container runtime
-- LocalStack
-- AWS CLI Version 2
-- PowerShell
-
-AWS CLI was configured to communicate with LocalStack rather than a real AWS account.
-
-### AWS CLI configuration
-
-```powershell
-aws configure set aws_access_key_id test
-aws configure set aws_secret_access_key test
-aws configure set default.region us-east-1
-aws configure set default.output json
-```
-
-The LocalStack endpoint was configured for the current PowerShell session:
-
-```powershell
-$EP="--endpoint-url=http://localhost:4566"
-```
-
-### LocalStack authentication
-
-The current LocalStack release required authentication. A valid LocalStack Auth Token was configured through the environment before starting the container. The token itself is intentionally not included in this report.
-
-LocalStack was started with:
-
-```powershell
-docker run -d --name localstack -p 4566:4566 -e LOCALSTACK_AUTH_TOKEN="$env:LOCALSTACK_AUTH_TOKEN" localstack/localstack
-```
-
-The LocalStack health endpoint confirmed that the `logs` service was available.
-
-![LocalStack health and available services](evidence-lab5/setup1.1.png)
-
-**Figure 1. LocalStack health check.**
-
-### AWS CLI connectivity verification
-
-```powershell
-aws $EP sts get-caller-identity
-```
-
-Result:
+## Architecture Diagram
 
 ```text
-{
-    "UserId": "000000000000",
-    "Account": "000000000000",
-    "Arn": "arn:aws:iam::000000000000:root"
-}
+                 Monitoring, Logging & Incident Detection
+                                LAB 5
+                                  │
+              ┌───────────────────┼───────────────────┐
+              │                   │                   │
+        SESSION A             SESSION B          INCIDENT
+       Logging & Query       Integrity &          Response
+        Tasks 1–3             Detection           Task 6
+              │                   │                   │
+              ▼                   ▼                   ▼
+        ┌───────────┐       ┌─────────────┐    ┌──────────────┐
+        │ auth.log  │       │ auth.chain  │    │ Correlation  │
+        │           │       │ SHA-256     │    │ Alert        │
+        │ LOGIN_OK  │       │ hash chain  │    │              │
+        │ LOGIN_FAIL│       │             │    │ 4 FAIL       │
+        │ EXPORT    │       │ auth.tampered│   │ 1 SUCCESS    │
+        └─────┬─────┘       └─────────────┘    │ 1 EXPORT     │
+              │                                └──────┬───────┘
+              ▼                                       │
+      ┌────────────────┐                              ▼
+      │ LocalStack      │                       ┌──────────────┐
+      │ CloudWatch Logs │                       │ CONTAIN      │
+      │ /ccse/app       │                       │ iptables DROP│
+      │ stream: auth    │                       └──────┬───────┘
+      └────────────────┘                              │
+                                                      ▼
+                                               ┌──────────────┐
+                                               │ COLLECT      │
+                                               │ evidence.log │
+                                               │ + SHA-256    │
+                                               └──────┬───────┘
+                                                      │
+                                                      ▼
+                                               ┌──────────────┐
+                                               │ DOCUMENT     │
+                                               │ Incident     │
+                                               │ Report       │
+                                               └──────────────┘
 ```
-
-![AWS CLI connected to LocalStack](evidence-lab5/setup1.2.png)
-
-**Figure 2. AWS CLI successfully communicating with LocalStack.**
 
 ---
 
-# SESSION A – WEEK 9
+## Evidence Folder
 
-## 3. Task 1 – Generate Sample Authentication Logs
+All screenshots for this report are stored in the following GitHub folder:
 
-A sample authentication log was created containing normal login activity, repeated failed logins, a successful login after the failures, and a suspicious data export.
+```text
+evidence-lab5/
+```
 
-The following log entries were created in `auth.log`:
+| Evidence File | Purpose |
+|---|---|
+| `setup1.1.png` | LocalStack health/status showing services available |
+| `setup1.2.png` | AWS CLI connectivity to LocalStack using STS |
+| `task1.png` | Generated `auth.log` with seven authentication/activity entries |
+| `task2.png` | Logs uploaded to and read back from LocalStack |
+| `task3.png` | Failed-login count grouped by source IP |
+| `task4.1.png` | Original SHA-256 hash chain |
+| `task4.2.png` | Tampered log and different final hash / tampering detection |
+| `task5.png` | Correlation alert showing probable attack sequence |
+| `task6.1.png` | Containment rule blocking `203.0.113.9` |
+| `task6.2.png` | Evidence file and SHA-256 hash |
+| `verify.png` | Evidence integrity verification |
+
+---
+
+# Session A — Week 9
+
+## Task 1 — Generate Application Logs
+
+A sample authentication log was created to represent normal activity and suspicious activity.
+
+The log contains:
 
 ```text
 2025-03-01T09:00:01 LOGIN_OK user=ahmad ip=10.0.0.5
@@ -109,97 +112,99 @@ The following log entries were created in `auth.log`:
 2025-03-01T09:01:40 EXPORT_DATA user=admin ip=203.0.113.9 size=500MB
 ```
 
-The log was checked using:
+PowerShell command used:
 
 ```powershell
 Get-Content auth.log
 ```
 
-![Authentication log](evidence-lab5/task1.png)
+![Application log generation](evidence-lab5/task1.png)
 
-**Figure 3. Sample authentication and suspicious activity log.**
+**Figure 1. Generated authentication and application activity log.**
 
-### Observation
+### Result
 
-The log contains:
+The `auth.log` file contains seven entries:
 
-- One successful login by `ahmad`.
-- Four failed login attempts against `admin`.
-- The four failures originated from `203.0.113.9`.
-- A successful `admin` login then occurred from the same IP.
-- A subsequent `EXPORT_DATA` event transferred `500MB`.
+- 1 normal successful login.
+- 4 failed login attempts.
+- 1 successful login from the suspicious IP.
+- 1 data-export event.
 
-This sequence provides the evidence required for later incident correlation.
+The repeated failures, later successful login and data export provide the activity pattern used in the later detection task.
 
 ---
 
-## 4. Task 2 – Centralise Logs in LocalStack
+## Task 2 — Centralise Logs in LocalStack
 
-A CloudWatch Logs-style log group and log stream were created in LocalStack.
+A CloudWatch Logs-style log group and stream were created in LocalStack.
 
-### Create the log group
+### Create the log group and stream
 
 ```powershell
+$EP="--endpoint-url=http://localhost:4566"
+
 aws $EP logs create-log-group --log-group-name /ccse/app
-```
-
-### Create the log stream
-
-```powershell
 aws $EP logs create-log-stream --log-group-name /ccse/app --log-stream-name auth
 ```
 
-The stream was verified with:
+The stream was verified using:
 
 ```powershell
 aws $EP logs describe-log-streams --log-group-name /ccse/app
 ```
 
-The resulting stream was:
+The `auth` log stream was successfully created under `/ccse/app`.
 
-```text
-logStreamName: auth
-storedBytes: 0
-```
-
-The seven log lines were then sent to the `auth` stream.
+### Send the seven log events
 
 ```powershell
 $TS = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
+
 Get-Content auth.log | ForEach-Object {
-    aws $EP logs put-log-events --log-group-name /ccse/app --log-stream-name auth --log-events "timestamp=$TS,message=$_"
+    aws $EP logs put-log-events `
+        --log-group-name /ccse/app `
+        --log-stream-name auth `
+        --log-events "timestamp=$TS,message=$_"
     $TS += 1000
 }
 ```
 
-Seven successful sequence tokens were returned, confirming that all seven log events were accepted.
+Seven successful `nextSequenceToken` responses were returned.
 
-### Read-back verification
+### Read the centralised logs back
 
 ```powershell
-aws $EP logs get-log-events --log-group-name /ccse/app --log-stream-name auth --query "events[].message" --output text
+aws $EP logs get-log-events `
+    --log-group-name /ccse/app `
+    --log-stream-name auth `
+    --query "events[].message" `
+    --output text
 ```
-
-The original seven messages were successfully read back from the centralised log stream.
 
 ![Centralised log read-back](evidence-lab5/task2.png)
 
-**Figure 4. Log events successfully stored and retrieved from LocalStack.**
+**Figure 2. Log events successfully stored and retrieved from LocalStack.**
 
 ### Result
 
-The log data was successfully centralised in the `/ccse/app` log group under the `auth` stream. This demonstrates how logs from an application can be collected into a central logging service for monitoring and investigation.
+All seven original messages were successfully read back from the centralised `auth` stream.
+
+This demonstrates how application logs can be collected into a central logging service so that security activity can be investigated from one location.
 
 ---
 
-## 5. Task 3 – Query Failed Login Activity
+## Task 3 — Query Security-Relevant Activity
 
-The authentication log was queried to identify the source IP responsible for failed login attempts.
+The authentication log was queried to identify repeated failed login attempts and their source IP.
 
 PowerShell command used:
 
 ```powershell
-Get-Content auth.log | Select-String "LOGIN_FAIL" | ForEach-Object { ($_ -split 'ip=')[1] } | Group-Object
+Get-Content auth.log |
+    Select-String "LOGIN_FAIL" |
+    ForEach-Object { ($_ -split 'ip=')[1] } |
+    Group-Object
 ```
 
 Result:
@@ -212,50 +217,46 @@ Count Name
 
 ![Failed login count grouped by IP](evidence-lab5/task3.png)
 
-**Figure 5. Failed-login activity grouped by source IP.**
+**Figure 3. Failed-login activity grouped by source IP.**
 
-### Observation
+### Result and observation
 
-The query shows that:
+The query identified:
 
-- `203.0.113.9` generated **4 failed login attempts**.
-- The repeated failures provide an indicator of possible brute-force activity.
+```text
+IP = 203.0.113.9
+Failed logins = 4
+```
 
-### Event vs Log
+Four failed login attempts from the same IP are a security-relevant indicator and can be used as part of a brute-force detection rule.
 
-An **event** is a single occurrence or activity, such as one `LOGIN_FAIL`.
+### Log vs Event
 
-A **log** is the recorded information about an event. It can contain details such as:
-
-- Timestamp
-- Event type
-- Username
-- Source IP address
-- Other relevant activity details
-
-For example:
+A **log** is a recorded, timestamped record of activity. For example:
 
 ```text
 LOGIN_FAIL user=admin ip=203.0.113.9
 ```
 
-represents a logged security event.
+An **event** is an occurrence or trigger that can be acted upon by a monitoring system. For example, four failed logins from the same IP can trigger an alert event.
+
+Therefore, logs provide the recorded evidence, while events can represent activities or conditions that monitoring systems detect and respond to.
 
 ---
 
-# SESSION B – WEEK 10
+# Session B — Week 10
 
-## 6. Task 4 – Tamper-Evident Hash-Chained Log
+## Task 4 — Tamper-Evident Hash-Chained Logs
 
-A hash chain was created to make changes to the log detectable.
+A SHA-256 hash chain was created so that modification of a log entry becomes detectable.
 
-For every log line, the SHA-256 hash was calculated from:
+The chain was calculated using:
 
 ```text
-previous_hash + current_log_line
+previous hash + current log line
 ```
 
-The first previous hash was initialized to:
+The initial previous hash was:
 
 ```text
 0
@@ -267,123 +268,113 @@ PowerShell implementation:
 
 ```powershell
 $PREV = "0"
+
 Get-Content auth.log | ForEach-Object {
     $INPUT = "$PREV$_"
+
     $PREV = [System.BitConverter]::ToString(
         [System.Security.Cryptography.SHA256]::Create().ComputeHash(
             [System.Text.Encoding]::UTF8.GetBytes($INPUT)
         )
     ).Replace("-","").ToLower()
+
     "$_ | $PREV"
 } | Set-Content auth.chain
 ```
 
-The resulting chain was displayed using:
+Display the chain:
 
 ```powershell
 Get-Content auth.chain
 ```
 
-Each log entry contained a corresponding 64-character SHA-256 hash.
-
 ![Original hash chain](evidence-lab5/task4.1.png)
 
-**Figure 6. Original authentication log with SHA-256 hash chain.**
+**Figure 4. Original authentication log with SHA-256 hash chain.**
 
-### Tampering simulation
+Each entry was linked to the previous hash, creating a chain where modification of an earlier entry affects subsequent hashes.
 
-The original log was deliberately modified by changing the data-export size from:
+### Simulate log tampering
 
-```text
-size=500MB
-```
-
-to:
-
-```text
-size=5MB
-```
-
-Command:
+The export amount was deliberately changed from `500MB` to `5MB`:
 
 ```powershell
 (Get-Content auth.log) -replace '500MB','5MB' | Set-Content auth.tampered
 ```
 
-The tampered log was checked with:
+The modified file was checked:
 
 ```powershell
 Get-Content auth.tampered
 ```
 
-The final entry was now:
+The final event became:
 
 ```text
 EXPORT_DATA user=admin ip=203.0.113.9 size=5MB
 ```
 
-### Recalculate the hash chain
-
-The hash chain was recalculated using the modified file:
+### Recalculate the tampered chain
 
 ```powershell
 $PREV = "0"
+
 Get-Content auth.tampered | ForEach-Object {
     $INPUT = "$PREV$_"
+
     $PREV = [System.BitConverter]::ToString(
         [System.Security.Cryptography.SHA256]::Create().ComputeHash(
             [System.Text.Encoding]::UTF8.GetBytes($INPUT)
         )
     ).Replace("-","").ToLower()
 }
+
 $TAMPERED = $PREV
 ```
 
-The original final hash and tampered final hash were then compared.
+The original final hash was compared with the tampered final hash.
 
 ![Tampering detection](evidence-lab5/task4.2.png)
 
-**Figure 7. Different final hashes demonstrate that the log was altered.**
+**Figure 5. Different final hashes demonstrate that the log was altered.**
 
 ### Result
 
-The original final hash was:
-
-```text
-ababa78b74bf524d9dadca8c48e4909fc10579a6f17574f42cefe8f81233cf
-```
-
-The tampered final hash was:
-
-```text
-72f1d53774a3a938fa7bd3a88f67894e5a64055a41ee7511eac53d7bd89d859b
-```
-
-The comparison produced:
+The original and tampered final hashes were different, and the recorded comparison returned:
 
 ```text
 Tampering detected : True
 ```
 
-Therefore, changing even one value in the log caused the final hash to change, demonstrating the tamper-evident property of the hash chain.
+This proves that modifying the log changed the resulting hash chain. A hash chain therefore provides a practical way to make log alteration detectable.
+
+### Security significance
+
+Audit logs should be protected from unauthorised modification because attackers may attempt to remove or change evidence of their activity. A hash chain provides tamper evidence because each record depends on the previous hash.
+
+For stronger protection in a real environment, the chain or final hash should also be stored or forwarded to a separate trusted location.
 
 ---
 
-## 7. Task 5 – Incident Detection by Correlation
+## Task 5 — Detect the Incident by Correlation
 
-The log was analysed by correlating three different types of activity from the same source IP:
+The incident was detected by correlating multiple events from the same source IP.
 
-1. Repeated failed login attempts.
-2. A successful login.
-3. A subsequent data-export event.
+The three conditions were:
+
+1. At least 3 failed logins.
+2. At least 1 successful login.
+3. At least 1 data-export event.
 
 PowerShell implementation:
 
 ```powershell
 $IP="203.0.113.9"
+
 $FAILS=(Get-Content auth.log | Select-String "LOGIN_FAIL.*$IP").Count
 $SUCCESS=(Get-Content auth.log | Select-String "LOGIN_OK.*$IP").Count
 $EXPORT=(Get-Content auth.log | Select-String "EXPORT_DATA.*$IP").Count
+
 Write-Host "IP=$IP fails=$FAILS success=$SUCCESS export=$EXPORT"
 
 if ($FAILS -ge 3 -and $SUCCESS -ge 1 -and $EXPORT -ge 1) {
@@ -400,29 +391,55 @@ ALERT: probable brute-force -> compromise -> data exfiltration
 
 ![Incident correlation alert](evidence-lab5/task5.png)
 
-**Figure 8. Correlation of authentication and data-export events.**
+**Figure 6. Correlation alert showing the probable attack sequence.**
 
 ### Analysis
 
-No single log line proves the complete incident.
+No individual log line reveals the complete incident:
 
-- A single failed login may be harmless.
-- A successful login may also be normal.
-- A data export may be legitimate.
+- A failed login can be normal.
+- A successful login can be normal.
+- A data export can also be legitimate.
 
-However, the combination of **four failed logins**, followed by a **successful login from the same IP**, followed by **data export** creates a suspicious sequence.
+The suspicious pattern appears when the events are correlated:
 
-The correlation rule therefore identifies a probable:
+```text
+4 failed logins
+      ↓
+successful login
+      ↓
+data export
+```
 
-**brute-force attack → account compromise → data exfiltration**
+All three activities came from `203.0.113.9`.
+
+Therefore, the correlation rule detected a probable:
+
+```text
+brute-force → account compromise → data exfiltration
+```
+
+This demonstrates the value of security monitoring and event correlation.
 
 ---
 
-## 8. Task 6 – Incident Response
+## Task 6 — Incident Response
 
-### 8.1 Detection
+The incident-response activity followed the required sequence:
 
-The incident was detected through event correlation.
+```text
+Detection
+   ↓
+Containment
+   ↓
+Evidence Collection
+   ↓
+Integrity Verification
+   ↓
+Documentation
+```
+
+### 6.1 Detection
 
 The source IP was:
 
@@ -430,76 +447,88 @@ The source IP was:
 203.0.113.9
 ```
 
-The observed activity was:
+The detection rule identified:
 
 ```text
 4 failed logins
-        ↓
 1 successful login
-        ↓
-1 data export
+1 export event
 ```
 
-This satisfied the detection rule and generated an alert.
+The correlation condition was satisfied and an alert was generated.
 
 ---
 
-### 8.2 Containment
+### 6.2 Containment
 
-The suspicious IP address was blocked using an `iptables` rule inside an Alpine Linux container.
+The suspicious source IP was blocked using an `iptables` rule inside an Alpine Linux container.
 
 ```powershell
 docker run --rm --cap-add=NET_ADMIN alpine sh -c "apk add -q iptables; iptables -A INPUT -s 203.0.113.9 -j DROP; iptables -L INPUT -n | tail -2"
 ```
 
-The resulting rule was:
+Result:
 
 ```text
-DROP    all    --    203.0.113.9    0.0.0.0/0
+target  prot opt source        destination
+DROP    all  --  203.0.113.9  0.0.0.0/0
 ```
 
 ![Containment rule](evidence-lab5/task6.1.png)
 
-**Figure 9. Containment rule blocking the suspicious IP address.**
+**Figure 7. Containment rule blocking the suspicious IP address.**
 
-The purpose of containment is to limit further activity from the suspected source while preserving the available evidence for investigation.
+The purpose of containment is to reduce the possibility of further malicious activity while the investigation continues.
 
 ---
 
-### 8.3 Evidence Collection
+### 6.3 Evidence Collection
 
-The original authentication log was copied into an evidence file:
+The original log was copied into an evidence file:
 
 ```powershell
 Copy-Item auth.log "evidence_$(Get-Date -Format yyyyMMdd).log"
 ```
 
-A SHA-256 integrity record was then generated:
+A SHA-256 hash was generated:
 
 ```powershell
 $EVIDENCE = Get-ChildItem evidence_*.log | Select-Object -First 1
-Get-FileHash $EVIDENCE.FullName -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLower())  $($EVIDENCE.Name)" } | Set-Content evidence.sha256
+
+Get-FileHash $EVIDENCE.FullName -Algorithm SHA256 |
+    ForEach-Object {
+        "$($_.Hash.ToLower())  $($EVIDENCE.Name)"
+    } |
+    Set-Content evidence.sha256
 ```
 
-The evidence hash file contained:
+The evidence hash file was then displayed:
 
-```text
-b8a941184e0c89ba6684f7136c6d404fb537348188e46a99a05976973140b9cf  evidence_20260909.log
+```powershell
+Get-Content evidence.sha256
 ```
 
 ![Evidence collection and SHA-256 hash](evidence-lab5/task6.2.png)
 
-**Figure 10. Preserved evidence and SHA-256 integrity hash.**
+**Figure 8. Preserved evidence and SHA-256 integrity hash.**
+
+The hash provides a reference value that can later be used to verify that the evidence file has not changed.
 
 ---
 
-### 8.4 Evidence Integrity Verification
+### 6.4 Evidence Integrity Verification
 
-The stored hash was compared with a newly calculated hash:
+The stored hash was compared with a newly calculated SHA-256 hash:
 
 ```powershell
 $EXPECTED = (Get-Content evidence.sha256).Split()[0]
-$ACTUAL = (Get-FileHash (Get-ChildItem evidence_*.log | Select-Object -First 1).FullName -Algorithm SHA256).Hash.ToLower()
+
+$ACTUAL = (
+    Get-FileHash `
+        (Get-ChildItem evidence_*.log | Select-Object -First 1).FullName `
+        -Algorithm SHA256
+).Hash.ToLower()
+
 Write-Host "Expected : $EXPECTED"
 Write-Host "Actual   : $ACTUAL"
 Write-Host "Integrity: $($EXPECTED -eq $ACTUAL)"
@@ -515,279 +544,167 @@ Integrity: True
 
 ![Evidence integrity verification](evidence-lab5/verify.png)
 
-**Figure 11. Evidence hash verification confirms that the preserved log remains unchanged.**
+**Figure 9. Evidence integrity verification confirms that the preserved evidence remains unchanged.**
 
 ---
 
-# 9. Incident Report
+# Incident Report
 
 ## Detection
 
-The monitoring system detected suspicious activity associated with IP address `203.0.113.9`. The log contained four failed login attempts against the `admin` account, followed by a successful login from the same IP address. A subsequent `EXPORT_DATA` event transferred `500MB`.
-
-The correlation rule generated the following alert:
-
-```text
-ALERT: probable brute-force -> compromise -> data exfiltration
-```
+The incident was detected by correlating authentication and data-export activity from source IP `203.0.113.9`. Four failed login attempts were followed by one successful login and a subsequent `EXPORT_DATA` event involving `500MB`.
 
 ## Analysis
 
-The sequence of events indicates a probable brute-force attack followed by account compromise and possible data exfiltration.
-
-The four consecutive failed login attempts are consistent with password-guessing activity. The successful login from the same IP after the failures increases the likelihood that the account was compromised. The following `EXPORT_DATA` event is suspicious because it occurred from the same IP shortly after the successful login.
-
-Correlation was necessary because no individual event alone established the complete incident.
+The repeated failed logins suggested possible brute-force activity. The successful login from the same IP suggested possible account compromise. The following `500MB` data export was suspicious because it occurred immediately after the successful login. Together, the events formed a probable brute-force → compromise → data-exfiltration sequence.
 
 ## Containment
 
-The suspected source IP `203.0.113.9` was blocked using an `iptables` DROP rule:
-
-```text
-DROP    all    --    203.0.113.9    0.0.0.0/0
-```
-
-This was performed to reduce the possibility of continued activity from the suspected source.
+The suspicious IP address `203.0.113.9` was blocked using an `iptables` DROP rule. This was performed as a containment demonstration inside an Alpine container.
 
 ## Evidence & Integrity
 
-The original `auth.log` was preserved as:
-
-```text
-evidence_20260909.log
-```
-
-Its SHA-256 hash was stored in:
-
-```text
-evidence.sha256
-```
-
-The recorded and recalculated hashes matched, producing:
-
-```text
-Integrity: True
-```
-
-The separate hash-chain test also demonstrated that modifying the original log changed the final hash and produced:
-
-```text
-Tampering detected : True
-```
-
-These results demonstrate two integrity controls: hash chaining for tamper detection and a SHA-256 evidence hash for verifying the preserved evidence file.
+The original `auth.log` was copied into an evidence file and protected with a SHA-256 hash. The stored hash and recalculated hash matched, producing `Integrity: True`. A separate tampering test also showed that modifying `500MB` to `5MB` changed the final hash of the hash chain.
 
 ## Lesson Learned
 
-Centralised logging makes security activity easier to search and correlate. Individual events may not reveal an incident, but combining authentication failures, successful authentication, and sensitive actions can expose a suspicious attack sequence. Logs should also be protected against modification and preserved with integrity information so they can support both investigation and later evidence requirements.
+Centralised logging provides visibility into security activity, while correlation allows related events to be detected as an incident. Logs should also be protected against modification and evidence should be hashed so its integrity can be verified during investigation.
 
 ---
 
-# 10. Questions and Answers
+# Questions and Answers
 
 ## Q1. What is the difference between a log and an event? Give examples.
 
-An **event** is a single occurrence or activity generated by a system or application.
-
-Example:
-
-```text
-LOGIN_FAIL user=admin ip=203.0.113.9
-```
-
-A **log** is the recorded information that stores details about one or more events, such as timestamps, usernames, IP addresses, and actions.
-
-Example:
+A **log** is a recorded and timestamped record of activity. For example:
 
 ```text
 2025-03-01T09:01:10 LOGIN_FAIL user=admin ip=203.0.113.9
 ```
 
-Therefore, an event is the activity itself, while a log is the record used to store and analyse that activity.
+An **event** is an occurrence or security condition that can be detected and acted upon. For example, four failed logins from one IP can produce a brute-force detection event.
+
+Therefore, logs provide recorded information, while events can represent activities or conditions used by monitoring and detection systems.
 
 ---
 
-## Q2. Why should audit logs be tamper-proof, and how does a hash chain achieve this?
+## Q2. Why should audit logs be tamper-proof or tamper-evident? How does a hash chain achieve this?
 
-Audit logs may be used to investigate security incidents and establish what happened. If an attacker can modify the logs, important evidence could be hidden or changed.
+Audit logs may be used to investigate incidents and prove what happened. If an attacker can modify the logs, evidence can be hidden or falsified.
 
-A hash chain makes modification detectable by calculating each hash from the previous hash and the current log entry:
-
-```text
-H1 = SHA256(0 + Event1)
-
-H2 = SHA256(H1 + Event2)
-
-H3 = SHA256(H2 + Event3)
-```
-
-If an earlier event is modified, its hash changes. That change affects the following hash values, ultimately changing the final hash. In this lab, changing `500MB` to `5MB` resulted in a different final hash and:
+A hash chain calculates each hash from the previous hash and the current log entry:
 
 ```text
-Tampering detected : True
+Hash(n) = SHA-256(Hash(n-1) + Log(n))
 ```
+
+If any log entry changes, its hash changes and the following hashes also change. Comparing the resulting chain with the original chain therefore reveals tampering.
 
 ---
 
 ## Q3. How does correlation detect an incident when no single line reveals it?
 
-Correlation combines multiple related events and looks for a suspicious sequence or pattern.
+Correlation combines related events and looks for a suspicious sequence.
 
 In this lab:
 
 ```text
-4 × LOGIN_FAIL
-        ↓
-LOGIN_OK
-        ↓
-EXPORT_DATA
+4 LOGIN_FAIL
+       +
+1 LOGIN_OK
+       +
+1 EXPORT_DATA
 ```
 
-All of these activities were associated with `203.0.113.9`.
+All occurred from `203.0.113.9`.
 
-A single failed login may not be suspicious by itself. A successful login may also be normal. A data export may also be legitimate. However, the sequence of repeated failures followed by successful authentication and a large data export provides a much stronger indication of compromise and possible exfiltration.
+A single failed login or export might be legitimate, but the combination creates a strong indicator of:
+
+```text
+brute-force → compromise → data exfiltration
+```
 
 ---
 
-## Q4. What are the incident-response steps performed in this lab and what is the goal of each?
+## Q4. What are the incident-response steps and what is their goal?
 
-| Step | Goal |
-|---|---|
-| Detection | Identify suspicious activity using log analysis and correlation. |
-| Analysis | Understand the sequence and determine whether the activity is likely an incident. |
-| Containment | Limit further activity from the suspected source. |
-| Evidence collection | Preserve relevant logs for investigation. |
-| Integrity verification | Prove that preserved evidence has not been modified. |
-| Documentation | Record what happened, what actions were performed, and what was learned. |
+The lab demonstrates:
 
-The overall goal is to identify the incident, limit its impact, preserve evidence, and document the response in a structured way.
+1. **Detection** — identify suspicious activity.
+2. **Containment** — limit further malicious activity.
+3. **Evidence collection** — preserve relevant evidence.
+4. **Integrity verification** — ensure evidence has not been changed.
+5. **Documentation** — record the incident timeline, analysis and actions.
+
+The overall goal is to reduce damage, preserve evidence and support investigation and recovery.
 
 ---
 
 ## Q5. How can the same logs support both security monitoring and compliance evidence?
 
-The same centralised logs can be used for continuous security monitoring and later evidence collection.
+The same logs can be queried continuously for security monitoring, such as detecting repeated failed logins.
 
-For security monitoring, logs can be queried for patterns such as:
+They can also be preserved as evidence for compliance and investigations because they provide timestamped records of system activity. Hashing and integrity verification help demonstrate that the preserved evidence has not been altered.
 
-- Repeated failed logins.
-- Successful logins after repeated failures.
-- Suspicious IP addresses.
-- Sensitive actions such as data exports.
-
-For compliance and auditing, the logs can provide records of:
-
-- Who performed an action.
-- When the action occurred.
-- Which source IP was involved.
-- What security-relevant activity occurred.
-
-Integrity mechanisms such as hash chains and SHA-256 hashes can strengthen the reliability of the records by making unauthorised modification detectable.
+Therefore, good logging provides both operational security visibility and evidence that controls and activities can be reviewed later.
 
 ---
 
-# 11. Security Checklist
+# Security Checklist
 
-| Security Requirement | Status | Evidence |
+| Requirement | Status | Evidence |
 |---|---|---|
-| Logs centralised | Completed | `task2.png` |
-| Failed logins queryable | Completed | `task3.png` |
-| Logs made tamper-evident | Completed | `task4.1.png`, `task4.2.png` |
-| Incident detected by correlation | Completed | `task5.png` |
-| Suspicious source contained | Completed | `task6.1.png` |
-| Evidence collected | Completed | `task6.2.png` |
-| Evidence integrity verified | Completed | `verify.png` |
-| Incident documented | Completed | Incident Report section |
+| Logs centralised | ✅ Completed | Task 2 |
+| Failed logins queryable | ✅ Completed | Task 3 |
+| Logs made tamper-evident | ✅ Completed | Task 4 |
+| Tampering detected | ✅ Completed | Task 4 |
+| Incident detected through correlation | ✅ Completed | Task 5 |
+| Attacker IP contained | ✅ Completed | Task 6 |
+| Evidence collected | ✅ Completed | Task 6 |
+| Evidence integrity verified | ✅ Completed | Verification |
+| Incident report documented | ✅ Completed | Incident Report |
 
 ---
 
-# 12. Verification
+# Verification
 
-The lab manual specifies verification of the LocalStack log group and evidence integrity.
-
-### Verify LocalStack log groups
+The LocalStack log groups can be verified with:
 
 ```powershell
 aws $EP logs describe-log-groups
 ```
 
-The expected log group is:
+The evidence hash can be independently checked by recalculating the SHA-256 hash and comparing it with `evidence.sha256`.
 
-```text
-/ccse/app
-```
-
-### Verify evidence integrity
-
-The PowerShell equivalent used in this Windows environment was:
-
-```powershell
-$EXPECTED = (Get-Content evidence.sha256).Split()[0]
-$ACTUAL = (Get-FileHash (Get-ChildItem evidence_*.log | Select-Object -First 1).FullName -Algorithm SHA256).Hash.ToLower()
-Write-Host "Expected : $EXPECTED"
-Write-Host "Actual   : $ACTUAL"
-Write-Host "Integrity: $($EXPECTED -eq $ACTUAL)"
-```
-
-Final result:
+The final verification in this lab produced:
 
 ```text
 Integrity: True
 ```
 
----
-
-# 13. Deliverables Summary
-
-The following laboratory deliverables were completed:
-
-- [x] Centralised `get-log-events` read-back.
-- [x] Failed-login count grouped by IP.
-- [x] Hash-chained log.
-- [x] Tampering demonstration and detection.
-- [x] Incident correlation alert.
-- [x] Containment rule.
-- [x] Evidence file and SHA-256 integrity hash.
-- [x] Evidence integrity verification.
-- [x] Incident report.
-- [x] Q1–Q5 answers.
-- [x] Security checklist.
+This confirms that the preserved evidence file matched its recorded SHA-256 hash.
 
 ---
 
-# 14. Conclusion
-
-Lab 5 demonstrated a complete basic monitoring and incident-detection workflow.
-
-First, authentication activity was recorded and centralised in a LocalStack CloudWatch Logs-style environment. The centralised logs were then queried to identify repeated failed login attempts.
-
-A SHA-256 hash chain was created to make log modification detectable. When the data-export size was deliberately changed from `500MB` to `5MB`, the final hash changed and the tampering test successfully reported `True`.
-
-The lab then demonstrated security-event correlation. Four failed login attempts from `203.0.113.9`, followed by a successful login and a data-export event, generated an alert indicating a probable brute-force attack followed by compromise and data exfiltration.
-
-Finally, an incident-response workflow was performed by detecting the incident, containing the suspected IP, preserving the original log as evidence, generating a SHA-256 evidence hash, and verifying that the evidence remained unchanged.
-
-Overall, the laboratory demonstrated how centralised logging, event correlation, tamper-evident records, and evidence integrity can work together to support cloud security monitoring and incident response.
-
 ---
 
-# 15. Evidence File List
+# Cleanup & Teardown
 
-Place the screenshots in an `evidence-lab5` folder beside this Markdown file using the following filenames:
+```powershell
+# Remove generated files
+Remove-Item -Force auth.log, auth.chain, auth.tampered, evidence_*.log, evidence.sha256 -ErrorAction SilentlyContinue
 
-```text
-evidence-lab5/
-├── setup1.1.png
-├── setup1.2.png
-├── task1.png
-├── task2.png
-├── task3.png
-├── task4.1.png
-├── task4.2.png
-├── task5.png
-├── task6.1.png
-├── task6.2.png
-└── verify.png
+# Stop and remove LocalStack
+docker stop localstack
+docker rm localstack
 ```
 
-These filenames correspond to the evidence figures used throughout this report.
+# Conclusion
+
+Lab 5 demonstrated the complete monitoring and incident-detection workflow.
+
+First, application authentication events were generated and centralised in LocalStack. The logs were then queried to identify repeated failed logins. A SHA-256 hash chain was created to make modification detectable, and a simulated change from `500MB` to `5MB` successfully produced a different final hash.
+
+The incident was then detected by correlating four failed logins, one successful login and one data-export event from the same IP address. Finally, the suspicious IP was contained, the original log was preserved as evidence, and its SHA-256 integrity was verified.
+
+The lab demonstrates that effective cloud security requires not only prevention, but also visibility, detection, evidence preservation and incident response.
