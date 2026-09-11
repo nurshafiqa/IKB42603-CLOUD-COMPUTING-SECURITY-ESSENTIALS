@@ -3,9 +3,9 @@
 ## Lab 3 --- Data Protection: Encryption & Key Management
 
 **Student Name:**
-NUR SHAFIQA BINTI AB RAHIM
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\
 **Student ID:**
-52215124832
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\
 **Lab:** Lab 3\
 **Topic:** Encryption & Key Management\
 **Environment:** Windows, Git Bash, Docker Desktop, OpenSSL, AWS CLI,
@@ -128,8 +128,13 @@ Output:
 Verified OK
 ```
 
-**Evidence:** `Task2_RSA_Signature_Verified.png`\
+**Evidence:** `Task2_RSA_Signature_Verified.png`
+
+![Task 2 RSA Signature Verified](evidence-lab3/Task2_RSA_Signature_Verified.png)
+
 **Final verification evidence:** `Final_RSA_Verification.png`
+
+![Final RSA Verification](evidence-lab3/Final_RSA_Verification.png)
 
 ### Result
 
@@ -369,9 +374,9 @@ PendingDeletion
 
 with a 7-day pending window.
 
-**Evidence:** `Task6_TenantA_Scheduled_Deletion.png`
+**Evidence:** `Task6_TenantA_Scheduled_Deletion_Final.png`
 
-![Task 6 Tenant A Scheduled Deletion](evidence-lab3/Task6_TenantA_Scheduled_Deletion.png)
+![Task 6 Tenant A Final Scheduled Deletion](evidence-lab3/Task6_TenantA_Scheduled_Deletion_Final.png)
 
 ## 6.3 Disable Tenant-A key
 
