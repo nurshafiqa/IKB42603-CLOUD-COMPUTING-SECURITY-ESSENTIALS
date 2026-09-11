@@ -3,9 +3,9 @@
 ## Lab 3 --- Data Protection: Encryption & Key Management
 
 **Student Name:**
-\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\
+Nur Shafiqa Binti Ab Rahim
 **Student ID:**
-\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\
+52215124832
 **Lab:** Lab 3\
 **Topic:** Encryption & Key Management\
 **Environment:** Windows, Git Bash, Docker Desktop, OpenSSL, AWS CLI,
