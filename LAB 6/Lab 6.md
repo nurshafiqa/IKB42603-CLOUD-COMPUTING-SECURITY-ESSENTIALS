@@ -268,8 +268,7 @@ test](evidence-lab6/task6_presigned_expiry.png)
 ![Task 6 --- SecureTransport policy
 test](evidence-lab6/task6_secure_transport.png)
 
-![Task 6 --- SecureTransport
-policy](evidence-lab6/task6_secure_transport_policy.png)
+
 
 ------------------------------------------------------------------------
 
